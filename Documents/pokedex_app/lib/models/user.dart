@@ -1,0 +1,24 @@
+class User {
+  int? id;
+  String name;
+  String email;
+  String password;
+
+  User({
+    this.id,
+    required this.name,
+    required this.email,
+    required this.password,
+  });
+
+  factory User.fromMap(Map<String, dynamic> json) => User(
+    id: json['id'],
+    name: json['name'],
+    email: json['email'],
+    password: json['password'],
+  );
+
+  Map<String, dynamic> toMap() {
+    return {'id': id, 'name': name, 'email': email, 'password': password};
+  }
+}
