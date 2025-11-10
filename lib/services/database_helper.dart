@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart';
-import 'package:pokedex_app/models/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/pokemon.dart';
+import '../models/user.dart';
 import 'package:crypto/crypto.dart';
 
 class DatabaseHelper {
@@ -29,7 +29,8 @@ class DatabaseHelper {
         pokedexNum INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         imageUrl TEXT NOT NULL,
-        type TEXT NOT NULL
+        generation TEXT NOT NULL
+         type TEXT NOT NULL
       )
     ''');
 
@@ -41,6 +42,16 @@ class DatabaseHelper {
         password TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE user_pokemons(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        pokedexNum INTEGER,
+        FOREIGN KEY (userId) REFERENCES users(id),
+        FOREIGN KEY (pokedexNum) REFERENCES pokemons(pokedexNum)
+      )
+    ''');
   }
 
   String _hashPassword(String password) {
@@ -49,37 +60,6 @@ class DatabaseHelper {
     return digest.toString();
   }
 
-  Future<List<Pokemon>> getPokemons() async {
-    Database db = await instance.database;
-    final result = await db.query('pokemons', orderBy: 'pokedexNum ASC');
-    return result.isNotEmpty
-        ? result.map((item) => Pokemon.fromMap(item)).toList()
-        : [];
-  }
-
-  Future<int> addPokemon(Pokemon newPokemon) async {
-    Database db = await instance.database;
-    return await db.insert('pokemons', newPokemon.toMap());
-  }
-
-  Future<int> removePokemon(int pokedexNum) async {
-    Database db = await instance.database;
-    return await db.delete(
-      'pokemons',
-      where: 'pokedexNum = ?',
-      whereArgs: [pokedexNum],
-    );
-  }
-
-  Future<int> updatePokemon(Pokemon pokemon) async {
-    Database db = await instance.database;
-    return await db.update(
-      'pokemons',
-      pokemon.toMap(),
-      where: 'pokedexNum = ?',
-      whereArgs: [pokemon.pokedexNum],
-    );
-  }
 
   Future<List<User>> getUsers() async {
     Database db = await instance.database;
@@ -96,21 +76,6 @@ class DatabaseHelper {
     return await db.insert('users', userMap);
   }
 
-  Future<int> removeUser(int id) async {
-    Database db = await instance.database;
-    return await db.delete('users', where: 'id = ?', whereArgs: [id]);
-  }
-
-  Future<int> updateUser(User user) async {
-    Database db = await instance.database;
-    return await db.update(
-      'users',
-      user.toMap(),
-      where: 'id = ?',
-      whereArgs: [user.id],
-    );
-  }
-
   Future<User?> loginUser(String email, String password) async {
     final db = await instance.database;
     final res = await db.query('users', where: 'email = ?', whereArgs: [email]);
@@ -123,5 +88,21 @@ class DatabaseHelper {
       }
     }
     return null;
+  }
+
+  Future<int> addPokemon(Pokemon newPokemon) async {
+    Database db = await instance.database;
+    return await db.insert('pokemons', newPokemon.toMap());
+
+  }
+
+
+  Future<void> capturePokemon(int userId, Pokemon pokemon) async {
+    final db = await instance.database;
+    await addPokemon(pokemon);
+    await db.insert(
+      'user_pokemons',
+      {'userId': userId, 'pokedexNum': pokemon.pokedexNum}
+    );
   }
 }
