@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pokedex_app/services/database_helper.dart';
 import 'package:pokedex_app/views/basepage.dart';
+import 'package:pokedex_app/views/login.dart';
 import '../models/user.dart';
 
 class Register extends StatefulWidget {
@@ -113,6 +114,16 @@ class _RegisterState extends State<Register> {
               ElevatedButton(
                 onPressed: _register,
                 child: const Text('Cadastrar'),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const Login()),
+                  );
+                },
+                child: const Text('Fazer login'),
               ),
             ],
           ),
