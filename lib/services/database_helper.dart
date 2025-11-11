@@ -29,8 +29,8 @@ class DatabaseHelper {
         pokedexNum INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         imageUrl TEXT NOT NULL,
-        generation TEXT NOT NULL
-         type TEXT NOT NULL
+        generation TEXT NOT NULL,
+        pkmType TEXT NOT NULL
       )
     ''');
 
@@ -59,7 +59,6 @@ class DatabaseHelper {
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
-
 
   Future<List<User>> getUsers() async {
     Database db = await instance.database;
@@ -90,19 +89,63 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<int> addPokemon(Pokemon newPokemon) async {
-    Database db = await instance.database;
-    return await db.insert('pokemons', newPokemon.toMap());
+  Future<int> updateUser(User user) async {
+  final db = await database;
+  final needsHash = !RegExp(r'^[a-f0-9]{64}$').hasMatch(user.password);
+  final updated = user.toMap()
+    ..['password'] = needsHash ? _hashPassword(user.password) : user.password;
+  return db.update('users', updated, where: 'id = ?', whereArgs: [user.id]);
+}
 
+  Future<User?> getUserById(int id) async {
+    final db = await database;
+    final maps = await db.query('users', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      return User.fromMap(maps.first);
+    }
+    return null;
   }
 
+  Future<int> addPokemon(Pokemon newPokemon) async {
+  final db = await instance.database;
+  final existing = await db.query(
+    'pokemons',
+    where: 'pokedexNum = ?',
+    whereArgs: [newPokemon.pokedexNum],
+  );
+  if (existing.isNotEmpty) return existing.first['pokedexNum'] as int;
+  return await db.insert('pokemons', newPokemon.toMap());
+}
 
   Future<void> capturePokemon(int userId, Pokemon pokemon) async {
     final db = await instance.database;
     await addPokemon(pokemon);
-    await db.insert(
-      'user_pokemons',
-      {'userId': userId, 'pokedexNum': pokemon.pokedexNum}
+    await db.insert('user_pokemons', {
+      'userId': userId,
+      'pokedexNum': pokemon.pokedexNum,
+    });
+  }
+
+  Future<void> saveAllPokemons(List<Pokemon> pokemons) async {
+  final db = await instance.database;
+  final batch = db.batch();
+  
+  for (final pokemon in pokemons) {
+    batch.insert(
+      'pokemons', 
+      pokemon.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+  
+  await batch.commit();
 }
+
+Future<List<Pokemon>> getAllPokemonsFromDB() async {
+  final db = await instance.database;
+  final result = await db.query('pokemons', orderBy: 'pokedexNum ASC');
+  return result.map((item) => Pokemon.fromMap(item)).toList();
+}
+}
+
+

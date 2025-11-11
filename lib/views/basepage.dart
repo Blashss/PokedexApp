@@ -5,8 +5,8 @@ import 'teams.dart';
 import 'profile.dart';
 
 class BasePage extends StatefulWidget {
-  final User user;
-  const BasePage({super.key, required this.user});
+  final User currentUser;
+  const BasePage({super.key, required this.currentUser});
 
   @override
   State<BasePage> createState() => _BasePageState();
@@ -19,7 +19,7 @@ class _BasePageState extends State<BasePage> {
   @override
   void initState() {
     super.initState();
-    _pages = [Pokemons(currentUser: widget.user), const Teams(), Profile(user: widget.user)];
+    _pages = [Pokemons(currentUser: widget.currentUser), const Teams(), Profile(currentUser: widget.currentUser)];
   }
 
   void _onItemTapped(int index) {

@@ -15,6 +15,7 @@ class _LoginState extends State<Login> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final dbHelper = DatabaseHelper.instance;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -25,7 +26,7 @@ class _LoginState extends State<Login> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => BasePage(user: user)),
+          MaterialPageRoute(builder: (_) => BasePage(currentUser: user)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -49,13 +50,38 @@ class _LoginState extends State<Login> {
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                validator: (v) => v!.isEmpty ? 'Digite seu e-mail' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Digite seu e-mail';
+                  }
+                  final emailRegex = RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  );
+                  if (!emailRegex.hasMatch(v)) {
+                    return 'Digite um e-mail válido';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Senha'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Senha',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: _obscurePassword,
                 validator: (v) => v!.isEmpty ? 'Digite sua senha' : null,
               ),
               const SizedBox(height: 24),

@@ -16,21 +16,28 @@ class _RegisterState extends State<Register> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final dbHelper = DatabaseHelper.instance;
+  bool _obscurePassword = true;
 
   Future<void> _register() async {
+    _nameController.text = _nameController.text.trim();
+    _emailController.text = _emailController.text.trim();
+    _passwordController.text = _passwordController.text.trim();
+
     if (_formKey.currentState!.validate()) {
       final user = User(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
       );
 
       try {
-        await dbHelper.addUser(user);
+        final userId = await dbHelper.addUser(user);
+        user.id = userId;
+
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => BasePage(user: user)),
+          MaterialPageRoute(builder: (_) => BasePage(currentUser: user)),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,16 +67,47 @@ class _RegisterState extends State<Register> {
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'E-mail'),
-                validator: (v) => v!.isEmpty ? 'Digite seu e-mail' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Digite seu e-mail';
+                  }
+                  final emailRegex = RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  );
+                  if (!emailRegex.hasMatch(v)) {
+                    return 'Digite um e-mail válido';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Senha'),
-                obscureText: true,
-                validator: (v) => v!.length < 6
-                    ? 'A senha deve ter no mínimo 6 caracteres'
-                    : null,
+                decoration: InputDecoration(
+                  labelText: 'Senha',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: _obscurePassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Digite sua senha';
+                  }
+                  if (v.length < 6) {
+                    return 'A senha deve ter no mínimo 6 caracteres';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               ElevatedButton(

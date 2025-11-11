@@ -1,15 +1,47 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pokedex_app/models/user.dart';
+import 'package:pokedex_app/views/login.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Profile extends StatefulWidget {
-  final User user;
-  const Profile({super.key, required this.user});
+  final User currentUser;
+  const Profile({super.key, required this.currentUser});
 
   @override
   State<Profile> createState() => _ProfileState();
 }
 
 class _ProfileState extends State<Profile> {
+  String? _pokemonImageUrl;
+  bool _loading = false;
+
+  Future<void> _fetchRandomPokemon() async {
+    setState(() => _loading = true);
+
+    try {
+      final randomId = Random().nextInt(807) + 1;
+      final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/$randomId');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final imageUrl = data['sprites']['other']['official-artwork']['front_default'];
+
+        setState(() {
+          _pokemonImageUrl = imageUrl;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar Pokémon: $e')),
+      );
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,16 +58,38 @@ class _ProfileState extends State<Profile> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.person_add, size: 100),
+            GestureDetector(
+              onTap: _fetchRandomPokemon,
+              child: _loading
+                  ? const CircularProgressIndicator()
+                  : _pokemonImageUrl != null
+                      ? CircleAvatar(
+                          radius: 60,
+                          backgroundImage: NetworkImage(_pokemonImageUrl!),
+                          backgroundColor: Colors.transparent,
+                        )
+                      : const Icon(Icons.person_add, size: 100),
             ),
-            SizedBox(height: 10),
-            Text(widget.user.name, style: const TextStyle(fontSize: 24)),
-            SizedBox(height: 10),
-            Text(widget.user.email, style: const TextStyle(fontSize: 24)),
-            SizedBox(height: 10),
-            IconButton(onPressed: () {}, icon: Icon(Icons.edit, size: 50)),
+            const SizedBox(height: 10),
+            Text(widget.currentUser.name, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 10),
+            Text(widget.currentUser.email, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 10),
+            IconButton(
+              onPressed: () {
+              },
+              icon: const Icon(Icons.edit, size: 50),
+            ),
+            const SizedBox(height: 10),
+            IconButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Login()),
+                );
+              },
+              icon: const Icon(Icons.logout, size: 50),
+            ),
           ],
         ),
       ),
