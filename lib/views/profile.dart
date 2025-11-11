@@ -83,7 +83,7 @@ class _ProfileState extends State<Profile> {
             const SizedBox(height: 10),
             IconButton(
               onPressed: () async {
-                await Navigator.push(
+                await Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const Login()),
                 );

@@ -18,9 +18,12 @@ class _LoginState extends State<Login> {
   bool _obscurePassword = true;
 
   Future<void> _login() async {
+    _emailController.text = _emailController.text.trim();
+    _passwordController.text = _passwordController.text.trim();
+
     if (_formKey.currentState!.validate()) {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+      final email = _emailController.text;
+      final password = _passwordController.text;
       final user = await dbHelper.loginUser(email, password);
       if (user != null) {
         if (!mounted) return;
