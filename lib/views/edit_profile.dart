@@ -34,15 +34,8 @@ class _EditProfileState extends State<EditProfile> {
             ? widget.currentUser.password
             : _passwordController.text.trim(),
       );
-
       await dbHelper.updateUser(updatedUser);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Perfil atualizado com sucesso!")),
-      );
-
-      Navigator.pop(context);
+      Navigator.pop(context, updatedUser);
     }
   }
 

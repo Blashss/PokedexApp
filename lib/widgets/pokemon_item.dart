@@ -38,7 +38,7 @@ class PokemonItem extends StatelessWidget {
               width: 70,
               fit: BoxFit.cover,
               placeholder: (context, url) =>
-              const CircularProgressIndicator(strokeWidth: 2),
+                  const CircularProgressIndicator(strokeWidth: 2),
               errorWidget: (context, url, error) => const Icon(Icons.error),
             ),
             const SizedBox(height: 8),

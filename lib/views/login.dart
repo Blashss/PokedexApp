@@ -5,7 +5,6 @@ import 'package:pokedex_app/views/register.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
-
   @override
   State<Login> createState() => _LoginState();
 }
@@ -20,7 +19,6 @@ class _LoginState extends State<Login> {
   Future<void> _login() async {
     _emailController.text = _emailController.text.trim();
     _passwordController.text = _passwordController.text.trim();
-
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;

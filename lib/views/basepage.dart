@@ -19,7 +19,11 @@ class _BasePageState extends State<BasePage> {
   @override
   void initState() {
     super.initState();
-    _pages = [Pokemons(currentUser: widget.currentUser), const Teams(), Profile(currentUser: widget.currentUser)];
+    _pages = [
+      Pokemons(currentUser: widget.currentUser),
+      Teams(currentUser: widget.currentUser),
+      Profile(currentUser: widget.currentUser)
+    ];
   }
 
   void _onItemTapped(int index) {

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pokedex_app/models/user.dart';
+import 'package:pokedex_app/views/edit_profile.dart';
 import 'package:pokedex_app/views/login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -27,16 +28,13 @@ class _ProfileState extends State<Profile> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final imageUrl = data['sprites']['other']['official-artwork']['front_default'];
+        final imageUrl =
+            data['sprites']['other']['official-artwork']['front_default'];
 
         setState(() {
           _pokemonImageUrl = imageUrl;
         });
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao carregar Pokémon: $e')),
-      );
     } finally {
       setState(() => _loading = false);
     }
@@ -63,20 +61,37 @@ class _ProfileState extends State<Profile> {
               child: _loading
                   ? const CircularProgressIndicator()
                   : _pokemonImageUrl != null
-                      ? CircleAvatar(
-                          radius: 60,
-                          backgroundImage: NetworkImage(_pokemonImageUrl!),
-                          backgroundColor: Colors.transparent,
-                        )
-                      : const Icon(Icons.person_add, size: 100),
+                  ? CircleAvatar(
+                      radius: 60,
+                      backgroundImage: NetworkImage(_pokemonImageUrl!),
+                      backgroundColor: Colors.transparent,
+                    )
+                  : const Icon(Icons.person_add, size: 100),
             ),
             const SizedBox(height: 10),
             Text(widget.currentUser.name, style: const TextStyle(fontSize: 24)),
             const SizedBox(height: 10),
-            Text(widget.currentUser.email, style: const TextStyle(fontSize: 24)),
+            Text(
+              widget.currentUser.email,
+              style: const TextStyle(fontSize: 24),
+            ),
             const SizedBox(height: 10),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
+                final updatedUser = await Navigator.push<User>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        EditProfile(currentUser: widget.currentUser),
+                  ),
+                );
+
+                if (updatedUser != null) {
+                  setState(() {
+                    widget.currentUser.name = updatedUser.name;
+                    widget.currentUser.password = updatedUser.password;
+                  });
+                }
               },
               icon: const Icon(Icons.edit, size: 50),
             ),

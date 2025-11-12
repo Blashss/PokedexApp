@@ -17,43 +17,8 @@ class Pokemons extends StatefulWidget {
 class _PokemonsState extends State<Pokemons> {
   late Future<List<Pokemon>> _futurePokemons;
 
-  final List<String> _selectedTypes = [];
-  String? _selectedRegion;
-
   bool _isSearching = false;
   String _searchQuery = '';
-
-  final regions = [
-    'Todas as Regiões',
-    'Kanto',
-    'Johto',
-    'Hoenn',
-    'Sinnoh',
-    'Unova',
-    'Kalos',
-    'Alola',
-  ];
-
-  final types = [
-    'Normal',
-    'Fire',
-    'Water',
-    'Grass',
-    'Electric',
-    'Ice',
-    'Fighting',
-    'Poison',
-    'Ground',
-    'Flying',
-    'Psychic',
-    'Bug',
-    'Rock',
-    'Ghost',
-    'Dark',
-    'Dragon',
-    'Steel',
-    'Fairy',
-  ];
 
   @override
   void initState() {
@@ -62,18 +27,27 @@ class _PokemonsState extends State<Pokemons> {
   }
 
   Future<List<Pokemon>> _loadPokemons() async {
-    final dbPokemons = await DatabaseHelper.instance.getAllPokemonsFromDB();
-    
+    final db = DatabaseHelper.instance;
+    final dbPokemons = await _getPokemonsFromDB();
+
     if (dbPokemons.isNotEmpty) {
       return dbPokemons;
     }
 
-    final apiPokemons = await fetchPokemons();
-    await DatabaseHelper.instance.saveAllPokemons(apiPokemons);
+    final apiPokemons = await _fetchPokemons();
+    for (final p in apiPokemons) {
+      await db.addPokemon(p);
+    }
     return apiPokemons;
   }
 
-  Future<List<Pokemon>> fetchPokemons() async {
+  Future<List<Pokemon>> _getPokemonsFromDB() async {
+    final db = await DatabaseHelper.instance.database;
+    final result = await db.query('pokemons');
+    return result.map((map) => Pokemon.fromMap(map)).toList();
+  }
+
+  Future<List<Pokemon>> _fetchPokemons() async {
     final res = await http.get(
       Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=807'),
     );
@@ -86,121 +60,14 @@ class _PokemonsState extends State<Pokemons> {
       );
 
       return pokemons;
+    } else {
+      throw Exception('Falha ao carregar Pokémons da API');
     }
-    throw Exception('Falha ao carregar Pokémons');
   }
 
-  void _openFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text("Filtrar Pokémons"),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Tipos:",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: types.map((type) {
-                        final isSelected = _selectedTypes.contains(type);
-                        return FilterChip(
-                          label: Text(type),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setDialogState(() {
-                              if (selected) {
-                                _selectedTypes.add(type);
-                              } else {
-                                _selectedTypes.remove(type);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Região:",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Column(
-                      children: regions.map((region) {
-                        return ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Radio<String>(
-                            value: region,
-                            groupValue: _selectedRegion,
-                            onChanged: (String? value) {
-                              setDialogState(() {
-                                _selectedRegion = value;
-                              });
-                            },
-                          ),
-                          title: Text(region),
-                          onTap: () {
-                            setDialogState(() {
-                              _selectedRegion = region;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setDialogState(() {
-                      _selectedRegion = null;
-                      _selectedTypes.clear();
-                    });
-                  },
-                  child: const Text("Limpar Tudo"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {});
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Aplicar"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  bool _matchesFilters(Pokemon p) {
-    final matchesRegion = _selectedRegion == null ||
-        _selectedRegion == 'Todas as Regiões' ||
-        p.generation == _selectedRegion;
-
-    final pokemonTypes = p.type
-        .split(',')
-        .map((t) => t.trim().toLowerCase())
-        .toList();
-
-    final matchesTypes = _selectedTypes.isEmpty ||
-        _selectedTypes.every((t) => pokemonTypes.contains(t.toLowerCase()));
-
-    final matchesSearch = _searchQuery.isEmpty ||
-        p.name.toLowerCase().contains(_searchQuery);
-
-    return matchesRegion && matchesTypes && matchesSearch;
+  bool _matchesSearch(Pokemon p) {
+    return _searchQuery.isEmpty ||
+        p.name.toLowerCase().contains(_searchQuery.toLowerCase());
   }
 
   @override
@@ -214,16 +81,27 @@ class _PokemonsState extends State<Pokemons> {
                   hintText: 'Pesquisar Pokémon...',
                   border: InputBorder.none,
                 ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                ),
                 onChanged: (value) {
                   setState(() {
-                    _searchQuery = value.toLowerCase();
+                    _searchQuery = value;
                   });
                 },
               )
-            : const Text("Pokédex"),
+            : Text(
+                "Pokédex",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search,
+              color: Theme.of(context).colorScheme.primaryContainer,
+            ),
             onPressed: () {
               setState(() {
                 if (_isSearching) _searchQuery = '';
@@ -231,11 +109,8 @@ class _PokemonsState extends State<Pokemons> {
               });
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _openFilterDialog,
-          ),
         ],
+        backgroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
       ),
       body: FutureBuilder<List<Pokemon>>(
         future: _futurePokemons,
@@ -250,52 +125,23 @@ class _PokemonsState extends State<Pokemons> {
             return const Center(child: Text('Nenhum Pokémon encontrado.'));
           }
 
-          final filtered = snapshot.data!.where(_matchesFilters).toList();
+          final filtered = snapshot.data!.where(_matchesSearch).toList();
 
-          return Column(
-            children: [
-              if (_selectedTypes.isNotEmpty ||
-                  (_selectedRegion != null &&
-                      _selectedRegion != 'Todas as Regiões'))
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.grey[200],
-                  child: Row(
-                    children: [
-                      const Icon(Icons.filter_alt, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Filtros: '
-                          '${_selectedTypes.isNotEmpty ? _selectedTypes.join(', ') : ''}'
-                          '${_selectedTypes.isNotEmpty && _selectedRegion != null && _selectedRegion != 'Todas as Regiões' ? ' • ' : ''}'
-                          '${_selectedRegion != null && _selectedRegion != 'Todas as Regiões' ? _selectedRegion! : ''}',
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.8,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return PokemonItem(
-                      pokemon: filtered[index],
-                      currentUser: widget.currentUser,
-                    );
-                  },
-                ),
-              ),
-            ],
+          return GridView.builder(
+            padding: const EdgeInsets.all(10),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: filtered.length,
+            itemBuilder: (context, index) {
+              return PokemonItem(
+                pokemon: filtered[index],
+                currentUser: widget.currentUser,
+              );
+            },
           );
         },
       ),

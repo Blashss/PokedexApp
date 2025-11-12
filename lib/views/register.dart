@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:pokedex_app/services/database_helper.dart';
-import 'package:pokedex_app/views/basepage.dart';
-import 'package:pokedex_app/views/login.dart';
+import '../services/database_helper.dart';
 import '../models/user.dart';
+import 'basepage.dart';
+import 'login.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -23,24 +23,21 @@ class _RegisterState extends State<Register> {
     _nameController.text = _nameController.text.trim();
     _emailController.text = _emailController.text.trim();
     _passwordController.text = _passwordController.text.trim();
-
     if (_formKey.currentState!.validate()) {
       final user = User(
         name: _nameController.text,
         email: _emailController.text,
         password: _passwordController.text,
       );
-
       try {
         final userId = await dbHelper.addUser(user);
         user.id = userId;
-
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => BasePage(currentUser: user)),
         );
-      } catch (e) {
+      } catch (_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erro: e-mail já cadastrado')),
         );
@@ -69,15 +66,9 @@ class _RegisterState extends State<Register> {
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'E-mail'),
                 validator: (v) {
-                  if (v == null || v.isEmpty) {
-                    return 'Digite seu e-mail';
-                  }
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-                  if (!emailRegex.hasMatch(v)) {
-                    return 'Digite um e-mail válido';
-                  }
+                  if (v == null || v.isEmpty) return 'Digite seu e-mail';
+                  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!regex.hasMatch(v)) return 'Digite um e-mail válido';
                   return null;
                 },
               ),
@@ -88,33 +79,22 @@ class _RegisterState extends State<Register> {
                   labelText: 'Senha',
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
                     ),
                     onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
+                      setState(() => _obscurePassword = !_obscurePassword);
                     },
                   ),
                 ),
                 obscureText: _obscurePassword,
                 validator: (v) {
-                  if (v == null || v.isEmpty) {
-                    return 'Digite sua senha';
-                  }
-                  if (v.length < 6) {
-                    return 'A senha deve ter no mínimo 6 caracteres';
-                  }
+                  if (v == null || v.isEmpty) return 'Digite sua senha';
+                  if (v.length < 6) return 'A senha deve ter no mínimo 6 caracteres';
                   return null;
                 },
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _register,
-                child: const Text('Cadastrar'),
-              ),
+              ElevatedButton(onPressed: _register, child: const Text('Cadastrar')),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
