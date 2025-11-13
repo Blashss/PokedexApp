@@ -1,10 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pokedex_app/models/user.dart';
 import 'package:pokedex_app/views/edit_profile.dart';
 import 'package:pokedex_app/views/login.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class Profile extends StatefulWidget {
   final User currentUser;
@@ -15,30 +12,6 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  String? _pokemonImageUrl;
-  bool _loading = false;
-
-  Future<void> _fetchRandomPokemon() async {
-    setState(() => _loading = true);
-
-    try {
-      final randomId = Random().nextInt(807) + 1;
-      final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/$randomId');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final imageUrl =
-            data['sprites']['other']['official-artwork']['front_default'];
-
-        setState(() {
-          _pokemonImageUrl = imageUrl;
-        });
-      }
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,19 +29,6 @@ class _ProfileState extends State<Profile> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            GestureDetector(
-              onTap: _fetchRandomPokemon,
-              child: _loading
-                  ? const CircularProgressIndicator()
-                  : _pokemonImageUrl != null
-                  ? CircleAvatar(
-                      radius: 60,
-                      backgroundImage: NetworkImage(_pokemonImageUrl!),
-                      backgroundColor: Colors.transparent,
-                    )
-                  : const Icon(Icons.person_add, size: 100),
-            ),
-            const SizedBox(height: 10),
             Text(widget.currentUser.name, style: const TextStyle(fontSize: 24)),
             const SizedBox(height: 10),
             Text(

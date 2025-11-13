@@ -14,14 +14,11 @@ class _EditProfileState extends State<EditProfile> {
   final _formKey = GlobalKey<FormState>();
   final dbHelper = DatabaseHelper.instance;
   late TextEditingController _nameController;
-  late TextEditingController _passwordController;
-  bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.currentUser.name);
-    _passwordController = TextEditingController();
   }
 
   Future<void> _saveChanges() async {
@@ -30,9 +27,7 @@ class _EditProfileState extends State<EditProfile> {
         id: widget.currentUser.id,
         name: _nameController.text.trim(),
         email: widget.currentUser.email,
-        password: _passwordController.text.isEmpty
-            ? widget.currentUser.password
-            : _passwordController.text.trim(),
+        password: widget.currentUser.password,
       );
       await dbHelper.updateUser(updatedUser);
       Navigator.pop(context, updatedUser);
