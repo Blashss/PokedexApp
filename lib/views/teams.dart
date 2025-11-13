@@ -78,7 +78,7 @@ Widget build(BuildContext context) {
      ),
      elevation: 4,
      child: const Center(
-     child: Icon(Icons.add, color: Colors.grey, size: 40),
+     child: Icon(Icons.catching_pokemon_outlined, color: Colors.red, size: 30),
      ),
     );
     }

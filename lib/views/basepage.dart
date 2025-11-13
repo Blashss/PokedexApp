@@ -49,7 +49,7 @@ class _BasePageState extends State<BasePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_box_outlined),
-            label: "Buscar",
+            label: "Times",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

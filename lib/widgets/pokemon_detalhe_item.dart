@@ -71,6 +71,12 @@ class PokemonDetalheItem extends StatelessWidget {
                   currentUser.id!,
                   pokemon,
                 );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${pokemon.name.toUpperCase()} foi capturado!'),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
                 Navigator.pop(context);
               },
             ),

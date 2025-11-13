@@ -55,26 +55,6 @@ class _EditProfileState extends State<EditProfile> {
                 decoration: const InputDecoration(labelText: "Nome"),
                 validator: (v) => v!.isEmpty ? "Digite um nome válido" : null,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: "Nova Senha (opcional)",
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-                obscureText: _obscurePassword,
-              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saveChanges,

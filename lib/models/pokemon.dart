@@ -9,14 +9,7 @@ class Pokemon {
   final String type;
   final int? captureId;
 
-  Pokemon({
-    required this.pokedexNum,
-    required this.name,
-    required this.imageUrl,
-    required this.generation,
-    required this.type,
-    this.captureId,
-  });
+  Pokemon({required this.pokedexNum,required this.name,required this.imageUrl,required this.generation,required this.type,this.captureId,});
 
   static Future<Pokemon> fromApi(Map<String, dynamic> data) async {
     final name = data['name'];
